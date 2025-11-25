@@ -5,47 +5,60 @@ import 'package:focus_flow_project/Tasks.dart';
 import 'AllStats/Stats.dart';
 
 class Home extends StatefulWidget {
+  final int secondsRemaining;
+  final bool isTimerRunning;
+  final bool isBreakTime;
+  final Function() startTimer;
+  final Function() pauseTimer;
+  final Function() resetTimer;
+  final Task? currentTask;
+  final int pomodoroDuration;
+
+  const Home({
+    super.key,
+    required this.secondsRemaining,
+    required this.isTimerRunning,
+    required this.isBreakTime,
+    required this.startTimer,
+    required this.pauseTimer,
+    required this.resetTimer,
+    this.currentTask,
+    required this.pomodoroDuration,
+  });
+
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  static const maxSeconds = 1500;
-  int seconds = maxSeconds;
-  Timer? timer;
+  int _currentPage = 0;
+  Timer? _carouselTimer;
+  final List<String> _messages = [
+    "Stay focused, You got this!",
+    "Getting started is the secret.",
+    "Break tasks into smaller steps.",
+    "A journey starts with a single step."
+  ];
 
-  void resetTimer() {
-    setState(() {
-      seconds = maxSeconds;
-    });
-  }
-
-  void startTimer({bool reset = true}) {
-    if (reset) {
-      resetTimer();
-    }
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
-      if (seconds > 0) {
-        setState(() {
-          seconds--;
-        });
-      } else {
-        stopTimer(reset: false);
-      }
-    });
-  }
-
-  void stopTimer({bool reset = true}) {
-    if (reset) {
-      resetTimer();
-    }
-    setState(() {
-      timer?.cancel();
+  @override
+  void initState() {
+    super.initState();
+    _carouselTimer = Timer.periodic(Duration(seconds: 5), (Timer timer) {
+      setState(() {
+        _currentPage = (_currentPage + 1) % _messages.length;
+      });
     });
   }
 
   @override
+  void dispose() {
+    _carouselTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final maxSeconds = widget.isBreakTime ? (widget.pomodoroDuration ~/ 5) : widget.pomodoroDuration;
     return Scaffold(
       backgroundColor: Color(0xFF0A0B0D),
       appBar: AppBar(
@@ -59,12 +72,13 @@ class _HomeState extends State<Home> {
                 Navigator.pushReplacementNamed(context, '/Login');
               }, style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF9966FF)),
                   child: Text("Logout", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),)),
-              Container(child: Icon(Icons.ac_unit),
-                padding: EdgeInsets.all(5),
-                decoration: BoxDecoration(
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: Color(0xFF9966FF),
                 ),
+                child: const Icon(Icons.ac_unit),
               )
             ],
           )
@@ -72,8 +86,8 @@ class _HomeState extends State<Home> {
       body: Column(
         children: [
           Container(
-            margin: EdgeInsets.only(left: 15, top: 13),
-            padding: EdgeInsets.only(top: 55),
+            margin: EdgeInsets.only(left: 13, top: 35),
+            padding: EdgeInsets.only(top: 10),
             decoration: BoxDecoration(
                 color: Color(0xFF111215),
                 borderRadius: BorderRadius.all(Radius.circular(15))
@@ -82,13 +96,28 @@ class _HomeState extends State<Home> {
             height: 400,
             child: Column(
               children: [
+                 if (widget.isBreakTime)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 30.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 10),
+                      child: Text(
+                        "Break Time",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 Center(
                   child: Stack(
                       alignment: Alignment.center,
                       children: [
                         SizedBox(
-                          width: 250,
-                          height: 250,
+                          width: 220,
+                          height: 220,
                           child: Container(
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -110,7 +139,7 @@ class _HomeState extends State<Home> {
                                   ]
                               ),
                               child: CircularProgressIndicator(
-                                value: seconds / maxSeconds,
+                                value: widget.secondsRemaining / maxSeconds,
                                 strokeWidth: 20,
                                 color: Color(0xFF0EE8FF),
                                 backgroundColor: Colors.grey[800],
@@ -119,7 +148,7 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         Text(
-                          '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}',
+                          '${(widget.secondsRemaining ~/ 60).toString().padLeft(2, '0')}:${(widget.secondsRemaining % 60).toString().padLeft(2, '0')}',
                           style:
                           TextStyle(
                               color: Colors.white,
@@ -131,12 +160,12 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Container(
-                    margin: EdgeInsets.only(top: 30),
+                    margin: EdgeInsets.only(top: 25),
                     child: ElevatedButton(onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF0EE8FF),
                         ),
-                        child: Text("Focus Mode",
+                        child: Text(widget.isBreakTime ? "Enjoy The Break" : (widget.currentTask?.title ?? "Focus Mode"),
                           style: TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),)))
               ],
             ),
@@ -144,99 +173,72 @@ class _HomeState extends State<Home> {
           Container(
             width: 380,
             padding: EdgeInsets.only(left: 8),
-            margin: EdgeInsets.only(top: 30, left: 20),
+            margin: EdgeInsets.only(top: 70, left: 10),
             child: Column(
               children: [
                 Row(
                   children: [
-                    ElevatedButton(onPressed: startTimer,
+                    ElevatedButton(onPressed: widget.startTimer,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF0EE8FF),
                           padding: EdgeInsets.symmetric(horizontal: 26, vertical: 7),
                         ),
-                        child: Text("Start", style: TextStyle(color: Colors.black, fontSize: 23),)),
+                        child: Text("Start", style: TextStyle(color: Colors.black, fontSize: 20),)),
                     SizedBox(
                       width: 18,
                     ),
                     ElevatedButton(onPressed: () {
-                      if (timer == null || !timer!.isActive) {
-                        startTimer(reset: false);
+                      if (widget.isTimerRunning) {
+                        widget.pauseTimer();
                       } else {
-                        stopTimer(reset: false);
+                        widget.startTimer();
                       }
                     }, style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF9966FF),
                       padding: EdgeInsets.symmetric(horizontal: 26, vertical: 7),
                     ),
-                        child: Text(timer != null && timer!.isActive ? "Pause" : "Resume",
-                          style: TextStyle(color: Colors.white, fontSize: 23),)),
+                        child: Text(widget.isTimerRunning ? "Pause" : "Resume",
+                          style: TextStyle(color: Colors.white, fontSize: 20),)),
                     SizedBox(
                       width: 18,
                     ),
-                    ElevatedButton(onPressed: stopTimer,
+                    ElevatedButton(onPressed: widget.resetTimer,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF9966FF),
                           padding: EdgeInsets.symmetric(horizontal: 26, vertical: 7),
                         ),
-                        child: Text("Reset", style: TextStyle(color: Colors.white, fontSize: 23),)),
+                        child: Text("Reset", style: TextStyle(color: Colors.white, fontSize: 20),)),
                   ],
                 ),
                 Row(
-                  children: [
-                    Container(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_messages.length, (index) {
+                    return Container(
                       width: 10,
                       height: 10,
-                      margin: EdgeInsets.only(top: 70, left: 150),
+                      margin: EdgeInsets.only(top: 70, left: 5, right: 5),
                       decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFF0EE8FF),
-                              blurRadius: 15,
-                              spreadRadius: 2,
-                            )
-                          ]
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFF0EE8FF),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      margin: EdgeInsets.only(top: 70, left: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
                         shape: BoxShape.circle,
+                        color: _currentPage == index ? Color(0xFF0EE8FF) : Colors.grey[800],
+                        boxShadow: _currentPage == index
+                            ? [
+                                BoxShadow(
+                                  color: Color(0xFF0EE8FF),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                )
+                              ]
+                            : [],
                       ),
-                    ),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      margin: EdgeInsets.only(top: 70, left: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      margin: EdgeInsets.only(top: 70, left: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
+                    );
+                  }),
                 ),
                 Container(
                   margin: EdgeInsets.only(top: 50),
                   child: Text(
-                    "Stay focused, You got this!", style: TextStyle(
+                    _messages[_currentPage],
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 20
                   ),
