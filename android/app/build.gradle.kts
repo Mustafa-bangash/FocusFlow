@@ -13,17 +13,19 @@ android {
     compileOptions {
         // Enables core library desugaring
         isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        // UPDATING to Java 11
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        // UPDATING to jvmTarget 11
+        jvmTarget = "11"
     }
 
     defaultConfig {
         applicationId = "com.example.focus_flow_project"
-        // Sets the minimum SDK version required to 21
+        // Setting minSdk to 21 to avoid potential issues
         minSdk = flutter.minSdkVersion
         targetSdk = 34
         versionCode = flutter.versionCode
@@ -45,7 +47,5 @@ flutter {
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
     implementation("com.google.firebase:firebase-analytics")
-
-//    // Adds the desugaring library
-//    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

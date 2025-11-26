@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/rendering.dart';
 
 class AllStats extends StatelessWidget{
-  AllStats({super.key});
+  const AllStats({super.key});
   double _getMonthData(int i) {
     final data = [4.0, 5.0, 8.0, 6.5, 9.0, 5.5, 7.0, 6.0, 8.5, 7.5, 9.0, 8.0];
     return data[i];

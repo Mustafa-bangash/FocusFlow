@@ -1,7 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:focus_flow_project/Home.dart';
 import 'package:focus_flow_project/Signup.dart';
 import 'package:focus_flow_project/main.dart';
 
@@ -38,10 +36,9 @@ class _LoginpageState extends State<Loginpage> {
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => NavigationClass()),
-      );
+      // Corrected navigation to use the named route
+      Navigator.pushReplacementNamed(context, '/Home');
+
     } on FirebaseException catch (ex) {
       showDialog(
         context: context,

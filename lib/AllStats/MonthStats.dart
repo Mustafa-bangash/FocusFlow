@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MonthStats extends StatelessWidget{
-  MonthStats({super.key});
+  const MonthStats({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:focus_flow_project/Tasks.dart';
-import 'AllStats/Stats.dart';
 
 class Home extends StatefulWidget {
   final int secondsRemaining;
@@ -72,14 +71,7 @@ class _HomeState extends State<Home> {
                 Navigator.pushReplacementNamed(context, '/Login');
               }, style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF9966FF)),
                   child: Text("Logout", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),)),
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFF9966FF),
-                ),
-                child: const Icon(Icons.ac_unit),
-              )
+
             ],
           )
       ),
@@ -216,7 +208,7 @@ class _HomeState extends State<Home> {
                     return Container(
                       width: 10,
                       height: 10,
-                      margin: EdgeInsets.only(top: 70, left: 5, right: 5),
+                      margin: EdgeInsets.only(top: 50, left: 5, right: 5),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: _currentPage == index ? Color(0xFF0EE8FF) : Colors.grey[800],
@@ -234,7 +226,7 @@ class _HomeState extends State<Home> {
                   }),
                 ),
                 Container(
-                  margin: EdgeInsets.only(top: 50),
+                  margin: EdgeInsets.only(top: 30),
                   child: Text(
                     _messages[_currentPage],
                     textAlign: TextAlign.center,

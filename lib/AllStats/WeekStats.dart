@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WeekStats extends StatelessWidget{
-  WeekStats({super.key});
+  const WeekStats({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

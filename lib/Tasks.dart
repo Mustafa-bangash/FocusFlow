@@ -1,18 +1,30 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-// A simple data model for a Task
 class Task {
-  String title;
-  String duration;
-  String category;
+  final String id;
+  final String title;
+  final String duration;
   bool isCompleted;
 
-  Task({
-    required this.title,
-    required this.duration,
-    required this.category,
-    this.isCompleted = false,
-  });
+  Task({required this.id, required this.title, required this.duration, this.isCompleted = false});
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'duration': duration,
+        'isCompleted': isCompleted,
+      };
+
+  factory Task.fromSnapshot(DocumentSnapshot<Map<String, dynamic>> snapshot) {
+    final data = snapshot.data()!;
+    return Task(
+      id: snapshot.id,
+      title: data['title'],
+      duration: data['duration'],
+      isCompleted: data['isCompleted'] ?? false,
+    );
+  }
 }
 
 class Tasks extends StatefulWidget {
@@ -24,74 +36,67 @@ class Tasks extends StatefulWidget {
 }
 
 class _TasksState extends State<Tasks> {
-  // A list to hold the tasks. I've added some initial tasks as examples.
-  final List<Task> _tasks = [
-    Task(title: "Read Chapter 4", duration: "45m", category: "Study"),
-    Task(title: "Deep work: draft outline", duration: "25m", category: "Work"),
-    Task(title: "Review flashcards", duration: "10m", category: "Study"),
-    Task(
-        title: "Quick stretch break",
-        duration: "5m",
-        category: "Personal",
-        isCompleted: true),
-  ];
+  final TextEditingController _taskController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
 
-  // This function shows a dialog to add a new task.
+  CollectionReference<Task> _getTasksCollection(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('tasks')
+        .withConverter<Task>(
+          fromFirestore: (snapshot, _) => Task.fromSnapshot(snapshot),
+          toFirestore: (task, _) => task.toJson(),
+        );
+  }
+
+  void _addTask(String title, String duration) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+    if (title.isNotEmpty && duration.isNotEmpty) {
+      final newTask = Task(id: '', title: title, duration: duration);
+      _getTasksCollection(userId).add(newTask);
+      _taskController.clear();
+      _durationController.clear();
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _deleteTask(Task task) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+    _getTasksCollection(userId).doc(task.id).delete();
+  }
+
+  void _toggleTaskCompletion(Task task) {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+    _getTasksCollection(userId).doc(task.id).update({'isCompleted': !task.isCompleted});
+  }
+
   void _showAddTaskDialog() {
-    final titleController = TextEditingController();
-    final durationController = TextEditingController();
-    final categoryController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
+          backgroundColor: const Color(0xFF2D2F41),
           title: const Text("Add New Task", style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: titleController,
+                controller: _taskController,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  labelText: "Title",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
+                    hintText: "Task Name",
+                    hintStyle: TextStyle(color: Colors.white70)),
               ),
               TextField(
-                controller: durationController,
+                controller: _durationController,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  labelText: "Duration (e.g., 25m)",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-              TextField(
-                controller: categoryController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: "Category (e.g., Work)",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
+                    hintText: "Duration (e.g., 25m)",
+                    hintStyle: TextStyle(color: Colors.white70)),
               ),
             ],
           ),
@@ -100,22 +105,11 @@ class _TasksState extends State<Tasks> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text("Cancel", style: TextStyle(color: Colors.white)),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
-                if (titleController.text.isNotEmpty) {
-                  setState(() {
-                    _tasks.add(Task(
-                      title: titleController.text,
-                      duration: durationController.text,
-                      category: categoryController.text,
-                    ));
-                  });
-                  Navigator.of(context).pop();
-                }
+                _addTask(_taskController.text, _durationController.text);
               },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9966FF)),
-              child: const Text("Add", style: TextStyle(color: Colors.white)),
+              child: const Text("Add", style: TextStyle(color: Color(0xff00DCF5))),
             ),
           ],
         );
@@ -125,184 +119,121 @@ class _TasksState extends State<Tasks> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0B0D),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0B0D),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Tasks",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold),
-            ),
-            ElevatedButton(
-              onPressed: _showAddTaskDialog,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9966FF)),
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search Tasks",
-                hintStyle: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
-                fillColor: const Color(0xFF121212),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                filled: true,
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.grey[600],
-                  size: 28,
-                ),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.circular(35),
-                ),
-              ),
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                return _buildTaskCard(task);
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: ElevatedButton(
-              onPressed: _showAddTaskDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF9966FF),
-                minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.add,
-                    size: 29,
-                    color: Colors.white,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    "New Task",
-                    style: TextStyle(
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!userSnapshot.hasData || userSnapshot.data == null) {
+          return const Center(
+            child: Text("Please log in to see your tasks.",
+                style: TextStyle(color: Colors.white)),
+          );
+        }
+
+        final tasksCollection = _getTasksCollection(userSnapshot.data!.uid);
+
+        // NO SCAFFOLD - The UI is now a Column within the parent layout.
+        return SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Your Tasks",
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
-                        fontWeight: FontWeight.w900),
-                  ),
-                ],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle, color: Color(0xff00DCF5), size: 32),
+                      onPressed: _showAddTaskDialog,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Task>>(
+                  stream: tasksCollection.snapshots(),
+                  builder: (context, taskSnapshot) {
+                    if (taskSnapshot.hasError) {
+                      return Center(
+                        child: Text("Error: ${taskSnapshot.error}",
+                            style: const TextStyle(color: Colors.red)),
+                      );
+                    }
+                    if (taskSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-  // A widget to build each task card
-  Widget _buildTaskCard(Task task) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121212),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Checkbox(
-            value: task.isCompleted,
-            onChanged: (bool? value) {
-              setState(() {
-                task.isCompleted = value ?? false;
-              });
-            },
-            checkColor: Colors.white,
-            activeColor: const Color(0xFF9966FF),
-            side: const BorderSide(color: Colors.grey, width: 2),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    color: task.isCompleted ? Colors.grey : Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  "${task.duration} . ${task.category}",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => widget.onStartTask(task),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0EE8FF),
-            ),
-            child: const Text("Start", style: TextStyle(color: Colors.black)),
-          ),
-          if (task.isCompleted)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text(
-                "Completed",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                    final tasks = taskSnapshot.data!.docs.map((doc) => doc.data()).toList();
+
+                    if (tasks.isEmpty) {
+                      return const Center(
+                        child: Text("No tasks yet. Add one!",
+                            style: TextStyle(color: Colors.white70)),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      itemCount: tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = tasks[index];
+                        return Card(
+                          color: const Color(0xFF1C1C24),
+                          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                          child: ListTile(
+                            leading: Checkbox(
+                              value: task.isCompleted,
+                              onChanged: (bool? value) {
+                                _toggleTaskCompletion(task);
+                              },
+                              checkColor: Colors.black,
+                              activeColor: const Color(0xff00DCF5),
+                              side: const BorderSide(color: Colors.white),
+                            ),
+                            title: Text(
+                              task.title,
+                              style: TextStyle(
+                                color: Colors.white,
+                                decoration: task.isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
+                            ),
+                            subtitle: Text(task.duration, style: const TextStyle(color: Colors.white70)),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.play_arrow, color: Color(0xff00DCF5)),
+                                  onPressed: () => widget.onStartTask(task),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                  onPressed: () => _deleteTask(task),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
-            ),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -2,27 +2,21 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'firebase_options.dart'; // Import the generated file
+
 import 'package:focus_flow_project/Signin.dart';
 import 'package:focus_flow_project/Signup.dart';
 import 'Home.dart';
 import 'Tasks.dart';
 import 'AllStats/Stats.dart';
-import 'notifications.dart';
-
-final NotificationService notificationService = NotificationService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Use the generated options to initialize Firebase
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyDpZ4_Iq5bHuuGRDxFimuKgq1sfgReF1NU",
-      appId: "1:575194671836:android:f1e9ba0ed5ef8f750f6219",
-      messagingSenderId: "575194671836",
-      projectId: "focusflowproject-5a59d",
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
-  await notificationService.init();
+
   runApp(const MyApp());
 }
 
@@ -48,6 +42,8 @@ class MyApp extends StatelessWidget {
 }
 
 class NavigationClass extends StatefulWidget {
+  const NavigationClass({super.key});
+
   @override
   State<NavigationClass> createState() => _NavigationClassState();
 }
@@ -67,17 +63,6 @@ class _NavigationClassState extends State<NavigationClass> {
   static const _shortBreak = 300; // 5 minutes
   static const _longBreak = 600; // 10 minutes
 
-  void _showTaskNotification(Task task) {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails('your channel id', 'your channel name',
-            channelDescription: 'your channel description',
-            importance: Importance.max,
-            priority: Priority.high,
-            ticker: 'ticker');
-    const NotificationDetails platformChannelSpecifics =        NotificationDetails(android: androidPlatformChannelSpecifics);
-    notificationService.flutterLocalNotificationsPlugin.show(
-        0, task.title, 'Duration: ${task.duration}', platformChannelSpecifics);
-  }
 
   void _startTask(Task task) {
     setState(() {
@@ -88,7 +73,7 @@ class _NavigationClassState extends State<NavigationClass> {
       _isBreakTime = false;
       _screenIndex = 0; // Switch to Home screen
       _startTimer();
-      _showTaskNotification(task);
+
     });
   }
 

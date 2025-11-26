@@ -4,7 +4,7 @@ import 'MonthStats.dart';
 import 'WeekStats.dart';
 
 class Stats extends StatefulWidget {
-  Stats({super.key});
+  const Stats({super.key});
   @override
   State<Stats> createState() => _Stats();
 
