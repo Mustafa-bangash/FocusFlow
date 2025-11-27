@@ -119,121 +119,124 @@ class _TasksState extends State<Tasks> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, userSnapshot) {
-        if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (!userSnapshot.hasData || userSnapshot.data == null) {
-          return const Center(
-            child: Text("Please log in to see your tasks.",
-                style: TextStyle(color: Colors.white)),
-          );
-        }
+    // This Scaffold provides the background color and structure, consistent with other screens.
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0B0D),
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, userSnapshot) {
+          if (userSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!userSnapshot.hasData || userSnapshot.data == null) {
+            return const Center(
+              child: Text("Please log in to see your tasks.",
+                  style: TextStyle(color: Colors.white)),
+            );
+          }
 
-        final tasksCollection = _getTasksCollection(userSnapshot.data!.uid);
+          final tasksCollection = _getTasksCollection(userSnapshot.data!.uid);
 
-        // NO SCAFFOLD - The UI is now a Column within the parent layout.
-        return SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Your Tasks",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+          return SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Your Tasks",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle, color: Color(0xff00DCF5), size: 32),
-                      onPressed: _showAddTaskDialog,
-                    ),
-                  ],
+                      IconButton(
+                        icon: const Icon(Icons.add_circle, color: Color(0xff00DCF5), size: 32),
+                        onPressed: _showAddTaskDialog,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot<Task>>(
-                  stream: tasksCollection.snapshots(),
-                  builder: (context, taskSnapshot) {
-                    if (taskSnapshot.hasError) {
-                      return Center(
-                        child: Text("Error: ${taskSnapshot.error}",
-                            style: const TextStyle(color: Colors.red)),
-                      );
-                    }
-                    if (taskSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot<Task>>(
+                    stream: tasksCollection.snapshots(),
+                    builder: (context, taskSnapshot) {
+                      if (taskSnapshot.hasError) {
+                        return Center(
+                          child: Text("Error: ${taskSnapshot.error}",
+                              style: const TextStyle(color: Colors.red)),
+                        );
+                      }
+                      if (taskSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                    final tasks = taskSnapshot.data!.docs.map((doc) => doc.data()).toList();
+                      final tasks = taskSnapshot.data!.docs.map((doc) => doc.data()).toList();
 
-                    if (tasks.isEmpty) {
-                      return const Center(
-                        child: Text("No tasks yet. Add one!",
-                            style: TextStyle(color: Colors.white70)),
-                      );
-                    }
+                      if (tasks.isEmpty) {
+                        return const Center(
+                          child: Text("No tasks yet. Add one!",
+                              style: TextStyle(color: Colors.white70)),
+                        );
+                      }
 
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(8.0),
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index) {
-                        final task = tasks[index];
-                        return Card(
-                          color: const Color(0xFF1C1C24),
-                          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
-                          child: ListTile(
-                            leading: Checkbox(
-                              value: task.isCompleted,
-                              onChanged: (bool? value) {
-                                _toggleTaskCompletion(task);
-                              },
-                              checkColor: Colors.black,
-                              activeColor: const Color(0xff00DCF5),
-                              side: const BorderSide(color: Colors.white),
-                            ),
-                            title: Text(
-                              task.title,
-                              style: TextStyle(
-                                color: Colors.white,
-                                decoration: task.isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(8.0),
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return Card(
+                            color: const Color(0xFF1C1C24),
+                            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: task.isCompleted,
+                                onChanged: (bool? value) {
+                                  _toggleTaskCompletion(task);
+                                },
+                                checkColor: Colors.black,
+                                activeColor: const Color(0xff00DCF5),
+                                side: const BorderSide(color: Colors.white),
+                              ),
+                              title: Text(
+                                task.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  decoration: task.isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                ),
+                              ),
+                              subtitle: Text(task.duration, style: const TextStyle(color: Colors.white70)),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.play_arrow, color: Color(0xff00DCF5)),
+                                    onPressed: () => widget.onStartTask(task),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                    onPressed: () => _deleteTask(task),
+                                  ),
+                                ],
                               ),
                             ),
-                            subtitle: Text(task.duration, style: const TextStyle(color: Colors.white70)),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.play_arrow, color: Color(0xff00DCF5)),
-                                  onPressed: () => widget.onStartTask(task),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                                  onPressed: () => _deleteTask(task),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

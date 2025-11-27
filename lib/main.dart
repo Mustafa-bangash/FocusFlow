@@ -8,7 +8,7 @@ import 'package:focus_flow_project/Signin.dart';
 import 'package:focus_flow_project/Signup.dart';
 import 'Home.dart';
 import 'Tasks.dart';
-import 'AllStats/Stats.dart';
+import 'AllStats/AllStats.dart'; // Corrected import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -164,7 +164,7 @@ class _NavigationClassState extends State<NavigationClass> {
             : 1500,
       ),
       Tasks(onStartTask: _startTask),
-      Stats(),
+      AllStats(), // Corrected class name
     ];
 
     return Scaffold(
