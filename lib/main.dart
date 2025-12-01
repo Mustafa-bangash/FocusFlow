@@ -2,17 +2,17 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Import the generated file
+import 'firebase_options.dart';
 
 import 'package:focus_flow_project/Signin.dart';
 import 'package:focus_flow_project/Signup.dart';
 import 'Home.dart';
 import 'Tasks.dart';
-import 'AllStats/AllStats.dart'; // Corrected import
+import 'AllStats/AllStats.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Use the generated options to initialize Firebase
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -51,27 +51,26 @@ class NavigationClass extends StatefulWidget {
 class _NavigationClassState extends State<NavigationClass> {
   int _screenIndex = 0;
 
-  // Timer and Task State
+
   Timer? _timer;
-  int _secondsRemaining = 1500; // Default 25 mins
+  int _secondsRemaining = 1500;
   bool _isTimerRunning = false;
   bool _isBreakTime = false;
   int _pomodoroCount = 0;
   Task? _currentTask;
 
-  // Break Durations
-  static const _shortBreak = 300; // 5 minutes
-  static const _longBreak = 600; // 10 minutes
+
+  static const _shortBreak = 300;
+  static const _longBreak = 600;
 
 
   void _startTask(Task task) {
     setState(() {
       _currentTask = task;
-      // Assuming duration is in format "25m". We parse the integer part.
       final durationInMinutes = int.tryParse(task.duration.replaceAll('m', '')) ?? 25;
       _secondsRemaining = durationInMinutes * 60;
       _isBreakTime = false;
-      _screenIndex = 0; // Switch to Home screen
+      _screenIndex = 0;
       _startTimer();
 
     });
@@ -107,7 +106,7 @@ class _NavigationClassState extends State<NavigationClass> {
         final durationInMinutes = int.tryParse(_currentTask!.duration.replaceAll('m', '')) ?? 25;
         _secondsRemaining = durationInMinutes * 60;
       } else {
-        _secondsRemaining = 1500; // Default
+        _secondsRemaining = 1500;
       }
     });
   }
@@ -115,7 +114,7 @@ class _NavigationClassState extends State<NavigationClass> {
   void _handleTimerCompletion() {
     _pauseTimer();
     if (!_isBreakTime) {
-      // Pomodoro session finished
+
       _pomodoroCount++;
       setState(() {
         _isBreakTime = true;
@@ -124,10 +123,10 @@ class _NavigationClassState extends State<NavigationClass> {
         } else {
           _secondsRemaining = _shortBreak;
         }
-        _startTimer(); // Auto-start break
+        _startTimer();
       });
     } else {
-      // Break finished
+
       setState(() {
         _isBreakTime = false;
         if (_currentTask != null) {
@@ -136,7 +135,7 @@ class _NavigationClassState extends State<NavigationClass> {
         } else {
           _secondsRemaining = 1500;
         }
-        // Optionally auto-start next pomodoro
+
          _startTimer();
       });
     }
@@ -164,7 +163,7 @@ class _NavigationClassState extends State<NavigationClass> {
             : 1500,
       ),
       Tasks(onStartTask: _startTask),
-      AllStats(), // Corrected class name
+      AllStats(),
     ];
 
     return Scaffold(

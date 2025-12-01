@@ -179,7 +179,7 @@ class _HomeState extends State<Home> {
                     SizedBox(
                       width: 18,
                     ),
-                    ElevatedButton(onPressed: () {
+                    ElevatedButton(onPressed: (){
                       if (widget.isTimerRunning) {
                         widget.pauseTimer();
                       } else {
