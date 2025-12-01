@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-// Converted to a StatefulWidget to fetch and display live data.
+
 class AllStats extends StatefulWidget {
   const AllStats({super.key});
 
@@ -11,7 +11,7 @@ class AllStats extends StatefulWidget {
 }
 
 class _AllStatsState extends State<AllStats> {
-  // REFACTORED: This is now a full-width card for a much cleaner look.
+
   Widget _buildStatCard(String title, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),

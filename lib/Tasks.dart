@@ -119,7 +119,7 @@ class _TasksState extends State<Tasks> {
 
   @override
   Widget build(BuildContext context) {
-    // This Scaffold provides the background color and structure, consistent with other screens.
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0B0D),
       body: StreamBuilder<User?>(
